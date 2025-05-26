@@ -15,6 +15,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
     <meta charset="UTF-8">
     <title>Create Document - Google Docs Clone</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             margin: 0;
@@ -25,7 +26,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
         }
 
         .create-doc-container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 60px auto;
             padding: 40px;
             background-color: #fff;
@@ -39,8 +40,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
             margin-bottom: 25px;
         }
 
-        input[type="text"],
-        textarea {
+        input[type="text"] {
             width: 100%;
             padding: 12px;
             margin-bottom: 20px;
@@ -49,6 +49,32 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
             font-size: 15px;
             font-family: inherit;
             box-sizing: border-box;
+        }
+
+        #toolbar {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            background: #f1f3f4;
+        }
+
+        #toolbar button {
+            background: none;
+            border: none;
+            font-size: 16px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        #editor {
+            width: 100%;
+            min-height: 300px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 15px;
+            background-color: #fff;
         }
 
         button[type="submit"] {
@@ -60,6 +86,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
             font-size: 15px;
             cursor: pointer;
             transition: background-color 0.3s ease;
+            margin-top: 15px;
         }
 
         button[type="submit"]:hover {
@@ -89,7 +116,20 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
         <h2>Create a New Document</h2>
         <form id="createDocForm">
             <input type="text" id="title" name="title" placeholder="Document Title" required>
-            <textarea id="content" name="content" placeholder="Write something..." rows="10" required></textarea>
+
+            <div id="toolbar">
+                <button type="button" onclick="format('bold')" title="Bold"><i class="fas fa-bold"></i></button>
+                <button type="button" onclick="format('italic')" title="Italic"><i class="fas fa-italic"></i></button>
+                <button type="button" onclick="format('underline')" title="Underline"><i class="fas fa-underline"></i></button>
+                <button type="button" onclick="format('insertUnorderedList')" title="Bullet List"><i class="fas fa-list-ul"></i></button>
+                <button type="button" onclick="format('formatBlock','<h1>')">H1</button>
+                <button type="button" onclick="format('formatBlock','<h2>')">H2</button>
+                <button type="button" onclick="format('formatBlock','<h3>')">H3</button>
+                <button type="button" onclick="insertImage()" title="Insert Image"><i class="fas fa-image"></i></button>
+            </div>
+
+            <div id="editor" contenteditable="true"></div>
+            <input type="hidden" id="content" name="content">
             <button type="submit">Create Document</button>
         </form>
         <div id="createMessage"></div>
@@ -97,8 +137,20 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
     </div>
 
     <script>
+    function format(command, value = null) {
+        document.execCommand(command, false, value);
+    }
+
+    function insertImage() {
+        const url = prompt("Enter image URL:");
+        if (url) {
+            document.execCommand('insertImage', false, url);
+        }
+    }
+
     $('#createDocForm').submit(function(e) {
         e.preventDefault();
+        $('#content').val($('#editor').html());
 
         $.post('../core/handleForms.php', {
             action: 'create_document',
